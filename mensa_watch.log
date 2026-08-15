@@ -120,3 +120,4 @@
 2026-08-15 13:25:10 通知エラー: HTTPSConnectionPool(host='ntfy.sh', port=443): Max retries exceeded with url: /akira-mensa-watch (Caused by NewConnectionError("HTTPSConnection(host='ntfy.sh', port=443): Failed to establish a new connection: [Errno 101] Network is unreachable"))
 2026-08-15 13:26:29 通知送信成功
 2026-08-15 13:26:57 通知送信成功
+2026-08-15 13:27:42 通知送信成功
