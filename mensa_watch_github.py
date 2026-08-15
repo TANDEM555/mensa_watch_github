@@ -830,9 +830,8 @@ def main():
 # if __name__ == "__main__":
 #     main()
 
-if __name__ == "__main__":
-    notify(
-        "MENSA通知テスト",
-        "🚨 これはMENSA監視のテスト通知です。\n\n"
-        "GitHub Actions → ntfy の通知経路が正常です。"
-    )
+headers = {
+    "Title": "MENSA Watch Test",
+    "Priority": "high",
+    "Tags": "warning"
+}
