@@ -114,3 +114,4 @@
 2026-08-15 08:06:29 [10月対象] 10/18 2026/10/18(日)　15:30~16:30 大阪府大阪市福島区 → full
 2026-08-15 08:06:29 監視時間終了
 2026-08-15 08:10:57 通知エラー: 'latin-1' codec can't encode characters in position 5-9: ordinal not in range(256)
+2026-08-15 08:23:09 通知エラー: 'latin-1' codec can't encode characters in position 5-9: ordinal not in range(256)
