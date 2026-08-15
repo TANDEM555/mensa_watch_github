@@ -6,6 +6,7 @@ import json
 import os
 import re
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 # ============================================================
@@ -51,7 +52,7 @@ HEADERS = {
 def log(message):
 
     text = (
-        f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} "
+        f"{datetime.now(ZoneInfo('Asia/Tokyo')).strftime('%Y-%m-%d %H:%M:%S')} "
         f"{message}"
     )
 
@@ -73,8 +74,6 @@ def notify(title, message):
 
     try:
 
-        # 日本語タイトルをHTTPヘッダーに入れず、
-        # UTF-8の本文として送信する
         body = (
             f"{title}\n\n"
             f"{message}"
@@ -568,7 +567,6 @@ def check_exams(state, first_check=False):
             key
         )
 
-        # 新しく出現した場合
         if old is None:
 
             log(
@@ -593,7 +591,6 @@ def check_exams(state, first_check=False):
 
         new_status = exam["status"]
 
-        # 満員 → 受付中
         if (
             old_status == "full"
             and
@@ -620,7 +617,6 @@ def check_exams(state, first_check=False):
 
             old["notified"] = True
 
-        # 状態を更新
         old["status"] = new_status
 
     # ========================================================
@@ -635,7 +631,6 @@ def check_exams(state, first_check=False):
             key
         )
 
-        # 新しく掲載された試験
         if old is None:
 
             log(
@@ -653,9 +648,6 @@ def check_exams(state, first_check=False):
                 "notified": False,
             }
 
-            # 初回では通知しない
-            # 2回目以降に新規掲載された場合、
-            # 受付中なら通知する
             if (
                 not first_check
                 and
@@ -685,7 +677,6 @@ def check_exams(state, first_check=False):
 
         new_status = exam["status"]
 
-        # 満員 → 受付中
         if (
             old_status == "full"
             and
@@ -749,10 +740,6 @@ def main():
 
         while True:
 
-            # ------------------------------------------------
-            # 最大監視時間を超えたら正常終了
-            # ------------------------------------------------
-
             if (
                 time.time() - start_time
                 >= MAX_RUNTIME
@@ -788,10 +775,6 @@ def main():
                 MIN_WAIT,
                 MAX_WAIT
             )
-
-            # ------------------------------------------------
-            # 残り時間を計算
-            # ------------------------------------------------
 
             remaining = (
                 MAX_RUNTIME
