@@ -1,4 +1,4 @@
-name: mensa Watch
+name: MENSA Watch
 
 on:
   workflow_dispatch:
