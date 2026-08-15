@@ -27,6 +27,9 @@ LOG_FILE = "mensa_watch.log"
 MIN_WAIT = 40
 MAX_WAIT = 90
 
+# 1回のGitHub Actionsで監視する最大時間（秒）
+MAX_RUNTIME = 240
+
 # 10月監視対象
 OCTOBER_TARGET_WARDS = [
     "大阪市北区",
@@ -338,18 +341,21 @@ def parse_exams(html):
         href = ""
 
         if a:
+
             href = a.get(
                 "href",
                 ""
             )
 
             if href.startswith("/"):
+
                 href = (
                     "https://mensa.jp"
                     + href
                 )
 
             elif href.startswith("exam/"):
+
                 href = (
                     "https://mensa.jp/"
                     + href
@@ -734,9 +740,26 @@ def main():
         not state["future"]
     )
 
+    start_time = time.time()
+
     try:
 
         while True:
+
+            # ------------------------------------------------
+            # 最大監視時間を超えたら正常終了
+            # ------------------------------------------------
+
+            if (
+                time.time() - start_time
+                >= MAX_RUNTIME
+            ):
+
+                log(
+                    "監視時間終了：今回の監視を終了します"
+                )
+
+                break
 
             try:
 
@@ -761,6 +784,28 @@ def main():
             wait = random.randint(
                 MIN_WAIT,
                 MAX_WAIT
+            )
+
+            # ------------------------------------------------
+            # 残り時間を計算
+            # ------------------------------------------------
+
+            remaining = (
+                MAX_RUNTIME
+                - (time.time() - start_time)
+            )
+
+            if remaining <= 0:
+
+                log(
+                    "監視時間終了"
+                )
+
+                break
+
+            wait = min(
+                wait,
+                int(remaining)
             )
 
             log(
