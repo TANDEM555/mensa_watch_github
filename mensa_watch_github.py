@@ -73,8 +73,8 @@ def notify(title, message):
 
     try:
 
-        # 日本語を含むタイトルはHTTPヘッダーではなく
-        # 本文の先頭に入れる
+        # 日本語タイトルをHTTPヘッダーに入れず、
+        # UTF-8の本文として送信する
         body = (
             f"{title}\n\n"
             f"{message}"
@@ -93,8 +93,13 @@ def notify(title, message):
         )
 
         if r.ok:
-            log("通知送信成功")
+
+            log(
+                "通知送信成功"
+            )
+
         else:
+
             log(
                 f"通知送信失敗 HTTP {r.status_code}"
             )
@@ -195,8 +200,6 @@ def parse_exams(html):
 
     exams = []
 
-    # 実際のMENSAページでは
-    # <ul class="list"> が各試験1件に対応
     lists = soup.select(
         "ul.list"
     )
@@ -235,12 +238,6 @@ def parse_exams(html):
             " ",
             strip=True
         )
-
-        # 例:
-        # 日時 ： 2026/10/18(日)　11:00~12:00
-        # 場所 ： 大阪府大阪市福島区
-        # このテストには...
-        # ----------------------------------------------------
 
         date_match = re.search(
             r"日時\s*[：:]\s*"
@@ -833,12 +830,5 @@ def main():
 # 実行
 # ============================================================
 
-# if __name__ == "__main__":
-#     main()
-
 if __name__ == "__main__":
-    notify(
-        "MENSA通知テスト",
-        "これはMENSA監視のテスト通知です。\n"
-        "GitHub Actions → ntfy の通知経路を確認しています。"
-    )
+    main()
