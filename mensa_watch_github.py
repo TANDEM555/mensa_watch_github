@@ -73,15 +73,21 @@ def notify(title, message):
 
     try:
 
+        # 日本語を含むタイトルはHTTPヘッダーではなく
+        # 本文の先頭に入れる
+        body = (
+            f"{title}\n\n"
+            f"{message}"
+        )
+
         headers = {
-            "Title": title,
             "Priority": "high",
             "Tags": "warning"
         }
 
         r = requests.post(
             NOTIFY_URL,
-            data=message.encode("utf-8"),
+            data=body.encode("utf-8"),
             headers=headers,
             timeout=10
         )
@@ -830,8 +836,9 @@ def main():
 # if __name__ == "__main__":
 #     main()
 
-headers = {
-    "Title": "MENSA Watch Test",
-    "Priority": "high",
-    "Tags": "warning"
-}
+if __name__ == "__main__":
+    notify(
+        "MENSA通知テスト",
+        "これはMENSA監視のテスト通知です。\n"
+        "GitHub Actions → ntfy の通知経路を確認しています。"
+    )
