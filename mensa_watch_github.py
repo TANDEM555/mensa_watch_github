@@ -37,6 +37,15 @@ OCTOBER_TARGET_WARDS = [
     "大阪市福島区",
 ]
 
+# 8月29日 大阪市北区の特定3枠を監視
+AUGUST_TARGET_DATE = "2026-08-29"
+AUGUST_TARGET_WARD = "大阪市北区"
+AUGUST_TARGET_TIMES = {
+    "12:00~13:00",
+    "13:30~14:30",
+    "15:00~16:00",
+}
+
 # 11月以降
 FUTURE_MONTH = 11
 
@@ -120,6 +129,7 @@ def load_state():
 
         return {
             "october": {},
+            "august": {},
             "future": {}
         }
 
@@ -133,6 +143,11 @@ def load_state():
 
             state = json.load(f)
 
+        # 既存の状態ファイル（昨日までの版）にも対応
+        state.setdefault("october", {})
+        state.setdefault("august", {})
+        state.setdefault("future", {})
+
         return state
 
     except Exception as e:
@@ -143,6 +158,7 @@ def load_state():
 
         return {
             "october": {},
+            "august": {},
             "future": {}
         }
 
@@ -415,6 +431,26 @@ def is_october_target(exam):
 
 
 # ============================================================
+# 8月29日 大阪市北区・特定3枠対象判定
+# ============================================================
+
+def is_august_target(exam):
+
+    if exam["year"] != 2026:
+        return False
+
+    if exam["month"] != 8 or exam["day"] != 29:
+        return False
+
+    if AUGUST_TARGET_WARD not in exam["place"]:
+        return False
+
+    return exam["datetime"].endswith(
+        tuple(AUGUST_TARGET_TIMES)
+    )
+
+
+# ============================================================
 # 11月以降・大阪市対象判定
 # ============================================================
 
@@ -473,6 +509,11 @@ def check_exams(state, first_check=False):
     # 今回取得した対象試験
     # --------------------------------------------------------
 
+    august_exams = [
+        e for e in exams
+        if is_august_target(e)
+    ]
+
     october_exams = [
         e for e in exams
         if is_october_target(e)
@@ -482,6 +523,10 @@ def check_exams(state, first_check=False):
         e for e in exams
         if is_future_target(e)
     ]
+
+    log(
+        f"8月29日大阪市北区・指定3枠：{len(august_exams)}件"
+    )
 
     log(
         f"10月大阪対象：{len(october_exams)}件"
@@ -494,6 +539,16 @@ def check_exams(state, first_check=False):
     # --------------------------------------------------------
     # デバッグ用：対象試験を表示
     # --------------------------------------------------------
+
+    for exam in august_exams:
+
+        log(
+            f"[8月29日指定枠] "
+            f"{exam['date']} "
+            f"{exam['datetime']} "
+            f"{exam['place']} "
+            f"→ {exam['status']}"
+        )
 
     for exam in october_exams:
 
@@ -525,6 +580,18 @@ def check_exams(state, first_check=False):
             "初回チェック：現在の状態を保存します"
         )
 
+        for exam in august_exams:
+
+            state["august"][
+                exam["key"]
+            ] = {
+                "status": exam["status"],
+                "datetime": exam["datetime"],
+                "place": exam["place"],
+                "href": exam["href"],
+                "notified": False,
+            }
+
         for exam in october_exams:
 
             state["october"][
@@ -554,6 +621,70 @@ def check_exams(state, first_check=False):
         )
 
         return
+
+    # ========================================================
+    # 8月29日指定3枠：満員 → 受付中
+    # ========================================================
+
+    for exam in august_exams:
+
+        key = exam["key"]
+
+        old = state["august"].get(
+            key
+        )
+
+        if old is None:
+
+            log(
+                f"[8月29日指定枠] 新しい試験を検出："
+                f"{exam['datetime']} "
+                f"{exam['place']}"
+            )
+
+            state["august"][key] = {
+                "status": exam["status"],
+                "datetime": exam["datetime"],
+                "place": exam["place"],
+                "href": exam["href"],
+                "notified": False,
+            }
+
+            continue
+
+        old_status = old.get(
+            "status"
+        )
+
+        new_status = exam["status"]
+
+        if (
+            old_status == "full"
+            and
+            new_status == "open"
+            and
+            not old.get("notified", False)
+        ):
+
+            message = (
+                "🚨 MENSA大阪 8月29日指定枠に空きが出ました！\n\n"
+                + exam_text(exam)
+            )
+
+            log(
+                f"★★★ 8月29日指定枠に空き発生 ★★★ "
+                f"{exam['datetime']} "
+                f"{exam['place']}"
+            )
+
+            notify(
+                "MENSA大阪 8月29日指定枠 空き発生！",
+                message
+            )
+
+            old["notified"] = True
+
+        old["status"] = new_status
 
     # ========================================================
     # 10月：満員 → 受付中
