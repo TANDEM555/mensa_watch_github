@@ -24,6 +24,9 @@ STATE_FILE = "mensa_state.json"
 # ログファイル
 LOG_FILE = "mensa_watch.log"
 
+# ログファイルに残す最大行数
+MAX_LOG_LINES = 200
+
 # 監視間隔
 MIN_WAIT = 40
 MAX_WAIT = 90
@@ -67,12 +70,62 @@ def log(message):
 
     print(text)
 
-    with open(
-        LOG_FILE,
-        "a",
-        encoding="utf-8"
-    ) as f:
-        f.write(text + "\n")
+    try:
+
+        # ----------------------------------------------------
+        # 既存ログを読み込み
+        # ----------------------------------------------------
+
+        lines = []
+
+        if os.path.exists(LOG_FILE):
+
+            with open(
+                LOG_FILE,
+                "r",
+                encoding="utf-8"
+            ) as f:
+
+                lines = f.readlines()
+
+        # ----------------------------------------------------
+        # 新しいログを追加
+        # ----------------------------------------------------
+
+        lines.append(
+            text + "\n"
+        )
+
+        # ----------------------------------------------------
+        # 最新200行だけ残す
+        # ----------------------------------------------------
+
+        if len(lines) > MAX_LOG_LINES:
+
+            lines = lines[
+                -MAX_LOG_LINES:
+            ]
+
+        # ----------------------------------------------------
+        # 保存
+        # ----------------------------------------------------
+
+        with open(
+            LOG_FILE,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.writelines(
+                lines
+            )
+
+    except Exception as e:
+
+        # ログ保存自体のエラーで監視を止めない
+        print(
+            f"ログ保存エラー: {e}"
+        )
 
 
 # ============================================================
@@ -946,3 +999,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
