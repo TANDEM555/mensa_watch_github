@@ -34,23 +34,43 @@ MAX_WAIT = 90
 # 1回のGitHub Actionsで監視する最大時間（秒）
 MAX_RUNTIME = 240
 
-# 10月監視対象
-OCTOBER_TARGET_WARDS = [
+
+# ============================================================
+# 監視対象
+# ============================================================
+
+# 8月監視対象
+AUGUST_TARGET_DATE = "2026-08-29"
+
+AUGUST_TARGET_WARDS = [
     "大阪市北区",
-    "大阪市福島区",
 ]
 
-# 8月29日 大阪市北区の特定3枠を監視
-AUGUST_TARGET_DATE = "2026-08-29"
-AUGUST_TARGET_WARD = "大阪市北区"
 AUGUST_TARGET_TIMES = {
     "12:00~13:00",
     "13:30~14:30",
     "15:00~16:00",
 }
 
-# 11月以降
+
+# 10月監視対象
+OCTOBER_TARGET_DATE = "2026-10-18"
+
+OCTOBER_TARGET_WARDS = [
+    "大阪市福島区",
+]
+
+OCTOBER_TARGET_TIMES = {
+    "11:00~12:00",
+    "13:30~14:30",
+    "15:30~16:30",
+}
+
+
+# 11月以降監視対象
 FUTURE_MONTH = 11
+FUTURE_TARGET_AREA = "大阪市"
+
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0"
@@ -72,7 +92,6 @@ def log(message):
 
     try:
 
-        # 既存ログを読み込む
         if os.path.exists(LOG_FILE):
 
             with open(
@@ -87,26 +106,17 @@ def log(message):
 
             lines = []
 
-        # 新しいログを追加
-        lines.append(
-            text + "\n"
-        )
+        lines.append(text + "\n")
 
-        # 最新200行だけ残す
-        lines = lines[
-            -MAX_LOG_LINES:
-        ]
+        lines = lines[-MAX_LOG_LINES:]
 
-        # 保存
         with open(
             LOG_FILE,
             "w",
             encoding="utf-8"
         ) as f:
 
-            f.writelines(
-                lines
-            )
+            f.writelines(lines)
 
     except Exception as e:
 
@@ -462,6 +472,32 @@ def parse_exams(html):
 
 
 # ============================================================
+# 8月対象判定
+# ============================================================
+
+def is_august_target(exam):
+
+    if exam["year"] != 2026:
+        return False
+
+    if exam["month"] != 8:
+        return False
+
+    if exam["day"] != 29:
+        return False
+
+    if not any(
+        ward in exam["place"]
+        for ward in AUGUST_TARGET_WARDS
+    ):
+        return False
+
+    return exam["datetime"].endswith(
+        tuple(AUGUST_TARGET_TIMES)
+    )
+
+
+# ============================================================
 # 10月対象判定
 # ============================================================
 
@@ -473,31 +509,17 @@ def is_october_target(exam):
     if exam["month"] != 10:
         return False
 
-    for ward in OCTOBER_TARGET_WARDS:
-
-        if ward in exam["place"]:
-            return True
-
-    return False
-
-
-# ============================================================
-# 8月29日 大阪市北区・特定3枠対象判定
-# ============================================================
-
-def is_august_target(exam):
-
-    if exam["year"] != 2026:
+    if exam["day"] != 18:
         return False
 
-    if exam["month"] != 8 or exam["day"] != 29:
-        return False
-
-    if AUGUST_TARGET_WARD not in exam["place"]:
+    if not any(
+        ward in exam["place"]
+        for ward in OCTOBER_TARGET_WARDS
+    ):
         return False
 
     return exam["datetime"].endswith(
-        tuple(AUGUST_TARGET_TIMES)
+        tuple(OCTOBER_TARGET_TIMES)
     )
 
 
@@ -513,7 +535,7 @@ def is_future_target(exam):
     if exam["month"] < FUTURE_MONTH:
         return False
 
-    if "大阪市" not in exam["place"]:
+    if FUTURE_TARGET_AREA not in exam["place"]:
         return False
 
     return True
@@ -541,15 +563,20 @@ def exam_text(exam):
 
 
 # ============================================================
-# 表示用場所
+# ログ用の地域名
 # ============================================================
 
-def display_place(place):
+def get_log_place(exam):
 
-    return place.replace(
+    place = exam["place"]
+
+    # 「大阪府」を削除
+    place = place.replace(
         "大阪府",
         ""
     )
+
+    return place
 
 
 # ============================================================
@@ -587,20 +614,39 @@ def check_exams(state, first_check=False):
         if is_future_target(e)
     ]
 
-    log(
-        f"8月大阪市北区：{len(august_exams)}件"
+    # --------------------------------------------------------
+    # 対象件数
+    # --------------------------------------------------------
+
+    august_place = (
+        AUGUST_TARGET_WARDS[0]
+        if AUGUST_TARGET_WARDS
+        else ""
+    )
+
+    october_place = (
+        OCTOBER_TARGET_WARDS[0]
+        if OCTOBER_TARGET_WARDS
+        else ""
     )
 
     log(
-        f"10月大阪市福島区：{len(october_exams)}件"
+        f"8月{august_place}："
+        f"{len(august_exams)}件"
     )
 
     log(
-        f"11月以降大阪市：{len(future_exams)}件"
+        f"10月{october_place}："
+        f"{len(october_exams)}件"
+    )
+
+    log(
+        f"11月以降{FUTURE_TARGET_AREA}："
+        f"{len(future_exams)}件"
     )
 
     # --------------------------------------------------------
-    # 対象試験を表示
+    # 8月対象試験
     # --------------------------------------------------------
 
     for exam in august_exams:
@@ -608,25 +654,33 @@ def check_exams(state, first_check=False):
         log(
             f"[8月] "
             f"{exam['datetime']} "
-            f"{display_place(exam['place'])} "
+            f"{get_log_place(exam)} "
             f"→ {exam['status']}"
         )
+
+    # --------------------------------------------------------
+    # 10月対象試験
+    # --------------------------------------------------------
 
     for exam in october_exams:
 
         log(
             f"[10月] "
             f"{exam['datetime']} "
-            f"{display_place(exam['place'])} "
+            f"{get_log_place(exam)} "
             f"→ {exam['status']}"
         )
+
+    # --------------------------------------------------------
+    # 11月以降対象試験
+    # --------------------------------------------------------
 
     for exam in future_exams:
 
         log(
             f"[11月以降] "
             f"{exam['datetime']} "
-            f"{display_place(exam['place'])} "
+            f"{get_log_place(exam)} "
             f"→ {exam['status']}"
         )
 
@@ -683,7 +737,7 @@ def check_exams(state, first_check=False):
         return
 
     # ========================================================
-    # 8月29日指定3枠：満員 → 受付中
+    # 8月：満員 → 受付中
     # ========================================================
 
     for exam in august_exams:
@@ -697,9 +751,9 @@ def check_exams(state, first_check=False):
         if old is None:
 
             log(
-                f"[8月29日指定枠] 新しい試験を検出："
+                f"[8月] 新しい試験を検出："
                 f"{exam['datetime']} "
-                f"{exam['place']}"
+                f"{get_log_place(exam)}"
             )
 
             state["august"][key] = {
@@ -732,9 +786,9 @@ def check_exams(state, first_check=False):
             )
 
             log(
-                f"★★★ 8月29日指定枠に空き発生 ★★★ "
+                f"★★★ 8月指定枠に空き発生 ★★★ "
                 f"{exam['datetime']} "
-                f"{exam['place']}"
+                f"{get_log_place(exam)}"
             )
 
             notify(
@@ -763,7 +817,7 @@ def check_exams(state, first_check=False):
             log(
                 f"[10月] 新しい試験を検出："
                 f"{exam['datetime']} "
-                f"{exam['place']}"
+                f"{get_log_place(exam)}"
             )
 
             state["october"][key] = {
@@ -798,7 +852,7 @@ def check_exams(state, first_check=False):
             log(
                 f"★★★ 10月大阪に空き発生 ★★★ "
                 f"{exam['datetime']} "
-                f"{exam['place']}"
+                f"{get_log_place(exam)}"
             )
 
             notify(
@@ -827,7 +881,7 @@ def check_exams(state, first_check=False):
             log(
                 f"[11月以降] 新規試験："
                 f"{exam['datetime']} "
-                f"{exam['place']} "
+                f"{get_log_place(exam)} "
                 f"→ {exam['status']}"
             )
 
@@ -1006,4 +1060,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
