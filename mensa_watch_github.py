@@ -24,7 +24,7 @@ STATE_FILE = "mensa_state.json"
 # ログファイル
 LOG_FILE = "mensa_watch.log"
 
-# ログファイルに残す最大行数
+# ログ保存行数
 MAX_LOG_LINES = 200
 
 # 監視間隔
@@ -72,12 +72,7 @@ def log(message):
 
     try:
 
-        # ----------------------------------------------------
-        # 既存ログを読み込み
-        # ----------------------------------------------------
-
-        lines = []
-
+        # 既存ログを読み込む
         if os.path.exists(LOG_FILE):
 
             with open(
@@ -88,28 +83,21 @@ def log(message):
 
                 lines = f.readlines()
 
-        # ----------------------------------------------------
-        # 新しいログを追加
-        # ----------------------------------------------------
+        else:
 
+            lines = []
+
+        # 新しいログを追加
         lines.append(
             text + "\n"
         )
 
-        # ----------------------------------------------------
         # 最新200行だけ残す
-        # ----------------------------------------------------
+        lines = lines[
+            -MAX_LOG_LINES:
+        ]
 
-        if len(lines) > MAX_LOG_LINES:
-
-            lines = lines[
-                -MAX_LOG_LINES:
-            ]
-
-        # ----------------------------------------------------
         # 保存
-        # ----------------------------------------------------
-
         with open(
             LOG_FILE,
             "w",
@@ -122,7 +110,6 @@ def log(message):
 
     except Exception as e:
 
-        # ログ保存自体のエラーで監視を止めない
         print(
             f"ログ保存エラー: {e}"
         )
@@ -196,10 +183,21 @@ def load_state():
 
             state = json.load(f)
 
-        # 既存の状態ファイル（昨日までの版）にも対応
-        state.setdefault("october", {})
-        state.setdefault("august", {})
-        state.setdefault("future", {})
+        # 既存の状態ファイルにも対応
+        state.setdefault(
+            "october",
+            {}
+        )
+
+        state.setdefault(
+            "august",
+            {}
+        )
+
+        state.setdefault(
+            "future",
+            {}
+        )
 
         return state
 
@@ -543,6 +541,18 @@ def exam_text(exam):
 
 
 # ============================================================
+# 表示用場所
+# ============================================================
+
+def display_place(place):
+
+    return place.replace(
+        "大阪府",
+        ""
+    )
+
+
+# ============================================================
 # 監視処理
 # ============================================================
 
@@ -578,11 +588,11 @@ def check_exams(state, first_check=False):
     ]
 
     log(
-        f"8月29日大阪市北区・指定3枠：{len(august_exams)}件"
+        f"8月大阪市北区：{len(august_exams)}件"
     )
 
     log(
-        f"10月大阪対象：{len(october_exams)}件"
+        f"10月大阪市福島区：{len(october_exams)}件"
     )
 
     log(
@@ -590,26 +600,24 @@ def check_exams(state, first_check=False):
     )
 
     # --------------------------------------------------------
-    # デバッグ用：対象試験を表示
+    # 対象試験を表示
     # --------------------------------------------------------
 
     for exam in august_exams:
 
         log(
-            f"[8月29日指定枠] "
-            f"{exam['date']} "
+            f"[8月] "
             f"{exam['datetime']} "
-            f"{exam['place']} "
+            f"{display_place(exam['place'])} "
             f"→ {exam['status']}"
         )
 
     for exam in october_exams:
 
         log(
-            f"[10月対象] "
-            f"{exam['date']} "
+            f"[10月] "
             f"{exam['datetime']} "
-            f"{exam['place']} "
+            f"{display_place(exam['place'])} "
             f"→ {exam['status']}"
         )
 
@@ -617,9 +625,8 @@ def check_exams(state, first_check=False):
 
         log(
             f"[11月以降] "
-            f"{exam['date']} "
             f"{exam['datetime']} "
-            f"{exam['place']} "
+            f"{display_place(exam['place'])} "
             f"→ {exam['status']}"
         )
 
