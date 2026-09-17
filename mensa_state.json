@@ -22,7 +22,29 @@
       "notified": false
     }
   },
-  "future": {},
+  "future": {
+    "2026-11-14|2026/11/14(土)　11:00~12:00|大阪府大阪市福島区": {
+      "status": "open",
+      "datetime": "2026/11/14(土)　11:00~12:00",
+      "place": "大阪府大阪市福島区",
+      "href": "https://mensa.jp/exam/index/notice/id/787/",
+      "notified": true
+    },
+    "2026-11-14|2026/11/14(土)　13:30~14:00|大阪府大阪市福島区": {
+      "status": "open",
+      "datetime": "2026/11/14(土)　13:30~14:00",
+      "place": "大阪府大阪市福島区",
+      "href": "https://mensa.jp/exam/index/notice/id/788/",
+      "notified": true
+    },
+    "2026-11-14|2026/11/14(土)　15:30~16:30|大阪府大阪市福島区": {
+      "status": "open",
+      "datetime": "2026/11/14(土)　15:30~16:30",
+      "place": "大阪府大阪市福島区",
+      "href": "https://mensa.jp/exam/index/notice/id/789/",
+      "notified": true
+    }
+  },
   "august": {
     "2026-08-29|2026/08/29(土)　12:00~13:00|大阪府大阪市北区": {
       "status": "expired",
