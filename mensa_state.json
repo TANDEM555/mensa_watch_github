@@ -38,11 +38,18 @@
       "notified": true
     },
     "2026-11-14|2026/11/14(土)　15:30~16:30|大阪府大阪市福島区": {
-      "status": "open",
+      "status": "full",
       "datetime": "2026/11/14(土)　15:30~16:30",
       "place": "大阪府大阪市福島区",
       "href": "https://mensa.jp/exam/index/notice/id/789/",
       "notified": true
+    },
+    "2026-11-14|2026/11/14(土)　13:30~14:30|大阪府大阪市福島区": {
+      "status": "full",
+      "datetime": "2026/11/14(土)　13:30~14:30",
+      "place": "大阪府大阪市福島区",
+      "href": "",
+      "notified": false
     }
   },
   "august": {
